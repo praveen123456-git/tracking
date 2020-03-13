@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<style type="text/css">
+		#mapCanvas{
+    width: 100%;
+    height: 400px;
+}	
+	</style>
+</head>
+<body>
+	<input type="hidden" id="date" value="<?php echo date('Y-m-d'); ?>">
+<div id="mapCanvas"></div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBDGggsgPyOeylizEH7RVleKQ-WJP22bk0"></script>
+
+<script type="text/javascript">
+var position = [];
+
+function initialize() { 
+    console.log('position 1 ::'+position[0]);
+    console.log('position 2 ::'+position[1]);
+    var latlng = new google.maps.LatLng(position[0], position[1]);
+    var myOptions = {
+        zoom: 20,
+        center: latlng,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+    };
+    map = new google.maps.Map(document.getElementById("mapCanvas"), myOptions);
+
+    marker = new google.maps.Marker({
+        position: latlng,
+        map: map,
+        title: "Latitude:"+position[0]+" | Longitude:"+position[1]
+    }); 
+}
+
+//Load google map
+google.maps.event.addDomListener(window, 'load', initialize);
+
+
+var numDeltas = 100;
+var delay = 10; //milliseconds
+var i = 0;
+var deltaLat;
+var deltaLng;
+
+
+function transition(lat,lng){
+    console.log('position 1 ::'+position[0]);
+    console.log('position 2 ::'+position[1]);
+    i = 0;
+    deltaLat = (lat - position[0])/numDeltas;
+    deltaLng = (lng - position[1])/numDeltas;
+     console.log('delta 1 ::'+deltaLat);
+    console.log('delta 2 ::'+deltaLng);
+    moveMarker();
+}
+
+function moveMarker(){
+    position[0] += deltaLat;
+    position[1] += deltaLng;
+    console.log('start 1 ::'+position[0]);
+    console.log('start 2 ::'+position[1]);
+    var latlng = new google.maps.LatLng(position[0], position[1]);
+    marker.setTitle("Latitude:"+position[0]+" | Longitude:"+position[1]);
+
+    marker.setPosition(latlng);
+    map.setCenter(new google.maps.LatLng(position[0], position[1]));
+    if(i!=numDeltas){
+        i++;
+        setTimeout(moveMarker, delay);
+    }
+}
+
+$(document).ready(function(){
+   get_track_data();
+});
+
+
+    	function get_track_data() {
+				var date= $('#date').val();;
+			$.ajax({
+				url:'get_track_data.php',
+			    type:'POST',
+			    data:'date='+date,
+			    dataType:'json',
+			    success:function(data){
+			    	if(data['status'] == true){
+                        
+                        position.push(data['result']['lat'],data['result']['lng']);
+			    		transition(data['result']['lat'],data['result']['lng']);
+			    	}
+			    }
+			}); 
+		}
+
+
+setInterval(function(){  get_track_data(); }, 8000);
+
+
+</script>
+</body>
+</html>
